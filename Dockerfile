@@ -23,7 +23,6 @@ COPY requirements-dev.txt requirements-dev.txt
 RUN python -m pip install -r requirements-dev.txt
 
 RUN mkdir /root/.taca/
-COPY tests/data/taca_test_cfg.yaml /root/.taca/taca.yaml
 
 FROM base AS testing
 COPY . /taca

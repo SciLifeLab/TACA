@@ -3,7 +3,7 @@
 import click
 
 from taca.analysis import analysis as an
-from taca.analysis import analysis_nanopore
+from taca.analysis import analysis_element, analysis_nanopore
 
 
 @click.group()
@@ -70,6 +70,29 @@ def transfer(rundir, runfolder_project, exclude_lane, software):
 def updatedb(rundir, software):
     """Save the run to statusdb."""
     an.upload_to_statusdb(rundir, software)
+
+
+# Element analysis subcommands
+
+
+@analysis.command()
+@click.option(
+    "-r",
+    "--run",
+    type=click.Path(exists=True),
+    default=None,
+    help="Demultiplex only a particular run",
+)
+def demultiplex_element(run):
+    """Demultiplex and transfer all runs present in the data directories."""
+    analysis_element.run_preprocessing(run)
+
+
+@analysis.command()
+@click.argument("run")
+def element_updatedb(run):
+    """Save the run to statusdb."""
+    analysis_element.upload_to_statusdb(run)
 
 
 # Nanopore analysis subcommands

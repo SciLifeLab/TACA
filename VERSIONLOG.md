@@ -1,5 +1,9 @@
 # TACA Version Log
 
+## 20241008.1
+
+Add support for processing Element Aviti data
+
 ## 20241007.1
 
 Update taca-ngi-pipeline repo URL in README
