@@ -15,7 +15,7 @@ from tests.nanopore.test_ONT_run_classes import (
 )
 
 
-def build_run_properties() -> dict:
+def build_run_properties() -> list[dict]:
     """In order to parametrize the test in a comprehensive way, the parametrization is
     tabulated as a string here.
     """
@@ -147,3 +147,6 @@ def test_ont_transfer(create_dirs, run_properties, caplog):
 
     # Start testing
     analysis_nanopore.ont_transfer(run_abspath=None, qc=False)
+
+    # Stop mocks
+    patch.stopall()

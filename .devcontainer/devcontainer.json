@@ -12,7 +12,12 @@
   "features": {},
   "customizations": {
     "vscode": {
-      "extensions": ["ms-python.python", "eamodio.gitlens"]
+      "extensions": [
+        "ms-python.python",
+        "eamodio.gitlens",
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker"
+      ]
     }
   },
   // Features to add to the dev container. More info: https://containers.dev/features.

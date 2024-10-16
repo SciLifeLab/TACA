@@ -166,6 +166,33 @@ class NanoporeRunsConnection(StatusdbSession):
         self.db[doc.id] = doc
 
 
+class ElementRunsConnection(StatusdbSession):
+    def __init__(self, config, dbname="element_runs"):
+        super().__init__(config)
+        self.db = self.connection[dbname]
+
+    def get_db_entry(self, run_id):
+        view_run_id = self.db.view("info/id")
+        try:
+            return view_run_id[run_id].rows[0]
+        except IndexError:
+            return None
+
+    def check_if_run_exists(self, run_id) -> bool:
+        return self.get_db_entry(run_id) is not None
+
+    def check_db_run_status(self, run_name) -> str:
+        view_status = self.db.view("info/status")
+        try:
+            status = view_status[run_name].rows[0].value
+        except IndexError:  # No rows found
+            return "Unknown"
+        return status
+
+    def upload_to_statusdb(self, run_obj: dict):
+        update_doc(self.db, run_obj)
+
+
 def update_doc(db, obj, over_write_db_entry=False):
     view = db.view("info/name")
     if len(view[obj["name"]].rows) == 1:
@@ -183,7 +210,7 @@ def update_doc(db, obj, over_write_db_entry=False):
         db.save(obj)
         logger.info("Saving {}".format(obj["name"]))
     else:
-        logger.warn("More than one row with name {} found".format(obj["name"]))
+        logger.warning("More than one row with name {} found".format(obj["name"]))
 
 
 def merge_dicts(d1, d2):

@@ -1,5 +1,3 @@
-title = "taca"
-
 # === LINTING ================================================================
 
 [tool.ruff]
@@ -37,7 +35,12 @@ filterwarnings = [
     'ignore::DeprecationWarning:couchdb.*',
     'ignore::DeprecationWarning:pkg_resources.*',
 ]
-addopts = "--cov=./taca --cov-report term-missing -vv --cache-clear tests/"
+# Default addopts
+addopts = "--ignore tests_old/"
+
+# CLI coverage reports, messes with IDE debugging
+# pytest --ignore tests_old/ --cov=./taca --cov-report term-missing -vv
+
 
 [tool.coverage.run]
 # The comment "# pragma: no cover" can be used to exclude a line from coverage

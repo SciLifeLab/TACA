@@ -14,17 +14,19 @@ def create_dirs():
         │   ├── Chromium_10X_indexes.txt
         │   └── Smart-seq3_v1.5.csv
         ├── log
-        │   ├── transfer_minion_qc.tsv
+        │   ├── taca.log
+        │   ├── transfer.tsv
+        │   ├── transfer_aviti.tsv
         │   ├── transfer_minion.tsv
+        │   ├── transfer_minion_qc.tsv
         │   └── transfer_promethion.tsv
-        │   └── transfer.tsv
-        │   └── taca.log
         ├── miarka
         │   ├── minion
         │   │   └── qc
         │   └── promethion
         ├── minknow_reports
         ├── ngi-nas-ns
+        │   ├── Aviti_data
         │   ├── NextSeq_data
         │   ├── NovaSeqXPlus_data
         │   ├── NovaSeq_data
@@ -32,10 +34,13 @@ def create_dirs():
         │   ├── miseq_data
         │   ├── promethion_data
         │   └── samplesheets
+        │       ├── Aviti
         │       ├── NovaSeqXPlus
         │       └── anglerfish
         └── ngi_data
             └── sequencing
+                ├── AV242106
+                │   └── nosync
                 ├── MiSeq
                 │   └── nosync
                 ├── NextSeq
@@ -65,6 +70,8 @@ def create_dirs():
     os.makedirs(f"{tmp.name}/ngi_data/sequencing/promethion/nosync")
     os.makedirs(f"{tmp.name}/ngi_data/sequencing/minion/nosync")
     os.makedirs(f"{tmp.name}/ngi_data/sequencing/minion/qc/nosync")
+    ## Element
+    os.makedirs(f"{tmp.name}/ngi_data/sequencing/AV242106/nosync")
 
     # Sequencing metadata
     ## Illumina
@@ -75,10 +82,13 @@ def create_dirs():
     ## ONT
     os.makedirs(f"{tmp.name}/ngi-nas-ns/promethion_data")
     os.makedirs(f"{tmp.name}/ngi-nas-ns/minion_data")
+    ## Element
+    os.makedirs(f"{tmp.name}/ngi-nas-ns/Aviti_data")
 
     # Samplesheets
     os.makedirs(f"{tmp.name}/ngi-nas-ns/samplesheets/anglerfish")
     os.makedirs(f"{tmp.name}/ngi-nas-ns/samplesheets/NovaSeqXPlus")
+    os.makedirs(f"{tmp.name}/ngi-nas-ns/samplesheets/Aviti")
 
     # Misc. ONT dirs/files
     os.makedirs(f"{tmp.name}/minknow_reports")
@@ -86,6 +96,7 @@ def create_dirs():
     open(f"{tmp.name}/log/transfer_promethion.tsv", "w").close()
     open(f"{tmp.name}/log/transfer_minion.tsv", "w").close()
     open(f"{tmp.name}/log/transfer_minion_qc.tsv", "w").close()
+    open(f"{tmp.name}/log/transfer_aviti.tsv", "w").close()
     open(f"{tmp.name}/log/transfer.tsv", "w").close()
     open(f"{tmp.name}/log/taca.log", "w").close()
 
