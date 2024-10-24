@@ -676,11 +676,11 @@ class Standard_Run(Run):
                     if is_dual_index or sample_type == "10X_SINGLE":
                         if (
                             sample_type == "10X_SINGLE"
-                        ):  # Case of 10X single indexes, demultiplex the whole index 2 cycles as FastQ for bcl2fastq. But this has to be ignored for bclconvert
+                        ):  # Case of 10X single indexes, demultiplex the whole index 2 cycles as FastQ of read for bcl2fastq. For BCL-convert it is treated as UMI
                             if self.software == "bcl2fastq":
                                 bm.append("Y" + str(cycles))
                             elif self.software == "bclconvert":
-                                bm.append("N" + str(cycles))
+                                bm.append("U" + str(cycles))
                             else:
                                 raise RuntimeError("Unrecognized software!")
                         else:
@@ -878,6 +878,8 @@ class Standard_Run(Run):
         if software == "bclconvert":
             output += f"[Settings]{os.linesep}"
             output += "OverrideCycles,{}{}".format(";".join(base_mask), os.linesep)
+            if any("U" in bm for bm in base_mask):
+                output += f"TrimUMI,0{os.linesep}"
 
             if CONFIG.get("bclconvert"):
                 if CONFIG["bclconvert"].get("settings"):

@@ -1,5 +1,9 @@
 # TACA Version Log
 
+## 20241024.1
+
+Fix TACA for handling 10X UMI cases by BCL Convert
+
 ## 20241016.1
 
 Switch to tarball and skip compression
