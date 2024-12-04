@@ -61,6 +61,10 @@ class ONT_run:
 
         # Get attributes from config
         self.minknow_reports_dir = CONFIG["nanopore_analysis"]["minknow_reports_dir"]
+        self.toulligqc_reports_dir = CONFIG["nanopore_analysis"][
+            "toulligqc_reports_dir"
+        ]
+        self.toulligqc_executable = CONFIG["nanopore_analysis"]["toulligqc_executable"]
         self.analysis_server = CONFIG["nanopore_analysis"].get("analysis_server", None)
         self.rsync_options = CONFIG["nanopore_analysis"]["rsync_options"]
         for k, v in self.rsync_options.items():
@@ -105,6 +109,14 @@ class ONT_run:
         # Completion indicators
         assert self.has_file("/.sync_finished")
         assert self.has_file("/final_summary*.txt")
+
+        # Raw seq files
+        assert any(
+            [
+                dir in os.listdir(self.run_abspath)
+                for dir in ["pod5", "pod5_pass", "fast5", "fast5_pass"]
+            ]
+        )
 
         # NGI files from instrument
         assert self.has_file("/pore_count_history.csv")
@@ -338,6 +350,113 @@ class ONT_run:
             logger.error(msg)
             raise RsyncError(msg)
 
+    def toulligqc_report(self):
+        """Generate a QC report for the run using ToulligQC and publish it to GenStat."""
+
+        # Get sequencing summary file
+        glob_summary = glob.glob(f"{self.run_abspath}/sequencing_summary*.txt")
+        assert len(glob_summary) == 1, f"Found {len(glob_summary)} summary files"
+        summary = glob_summary[0]
+
+        # Determine the format of the raw sequencing data, sorted by preference
+        raw_data_dir_options = [
+            "pod5_pass",
+            "pod5",
+            "fast5_pass",
+            "fast5",
+        ]
+        raw_data_dir = None
+        for raw_data_dir_option in raw_data_dir_options:
+            if os.path.exists(f"{self.run_abspath}/{raw_data_dir_option}"):
+                raw_data_dir = raw_data_dir_option
+                break
+        if raw_data_dir is None:
+            raise AssertionError(f"No seq data found in {self.run_abspath}")
+        raw_data_format = "pod5" if "pod5" in raw_data_dir else "fast5"
+
+        # Load samplesheet, if any
+        ss_glob = glob.glob(f"{self.run_abspath}/sample_sheet*.csv")
+        if len(ss_glob) == 0:
+            samplesheet = None
+        elif len(ss_glob) > 1:
+            # If multiple samplesheet, use latest one
+            samplesheet = ss_glob.sort()[-1]
+        else:
+            samplesheet = ss_glob[0]
+
+        # Run has barcode subdirs
+        if len(glob.glob(f"{self.run_abspath}/fastq_pass/barcode*")) > 0:
+            barcode_dirs = True
+        else:
+            barcode_dirs = False
+
+        # Determine barcodes
+        if samplesheet:
+            ss_df = pd.read_csv(samplesheet)
+            if "barcode" in ss_df.columns:
+                ss_barcodes = list(ss_df["barcode"].unique())
+                ss_barcodes.sort()
+                barcode_nums = [int(bc[-2:]) for bc in ss_barcodes]
+                # If barcodes are numbered sequentially, write arg as range
+                if barcode_nums == list(range(1, len(barcode_nums) + 1)):
+                    barcodes_arg = f"{ss_barcodes[0]}:{ss_barcodes[-1]}"
+                else:
+                    barcodes_arg = ":".join(ss_barcodes)
+            else:
+                ss_barcodes = None
+
+        command_args = {
+            "--sequencing-summary-source": summary,
+            f"--{raw_data_format}-source": f"{self.run_abspath}/{raw_data_dir}",
+            "--output-directory": self.run_abspath,
+            "--report-name": "toulligqc_report",
+        }
+        if barcode_dirs:
+            command_args["--barcoding"] = ""
+            if samplesheet and ss_barcodes:
+                command_args["--samplesheet"] = samplesheet
+                command_args["--barcodes"] = barcodes_arg
+
+        # Build command list
+        command_list = [self.toulligqc_executable]
+        for k, v in command_args.items():
+            command_list.append(k)
+            if v:
+                command_list.append(v)
+
+        # Run the command
+        # Small enough to wait for, should be done in 1-5 minutes
+        process = subprocess.run(command_list)
+
+        # Check if the command was successful
+        if process.returncode == 0:
+            logging.info(f"{self.run_name}: ToulligQC report generated successfully.")
+        else:
+            raise subprocess.CalledProcessError(process.returncode, command_list)
+
+        # Copy the report to GenStat
+
+        logger.info(
+            f"{self.run_name}: Transferring ToulligQC report to ngi-internal..."
+        )
+        # Transfer the ToulligQC .html report file to ngi-internal, renaming it to the full run ID. Requires password-free SSH access.
+        report_src_path = self.get_file("/toulligqc_report/report.html")
+        report_dest_path = os.path.join(
+            self.toulligqc_reports_dir,
+            f"ToulligQC_{self.run_name}.html",
+        )
+        transfer_object = RsyncAgent(
+            src_path=report_src_path,
+            dest_path=report_dest_path,
+            validate=False,
+        )
+        try:
+            transfer_object.transfer()
+        except RsyncError:
+            msg = f"{self.run_name}: An error occurred while attempting to transfer the report {report_src_path} to {report_dest_path}."
+            logger.error(msg)
+            raise RsyncError(msg)
+
     # Transfer run
 
     def transfer_run(self):
@@ -499,7 +618,7 @@ class ONT_qc_run(ONT_run):
     def has_raw_seq_output(self) -> bool:
         """Check whether run has sequencing data output."""
 
-        raw_seq_dirs = ["pod5", "fast5_pass"]
+        raw_seq_dirs = ["pod5", "pod5_pass", "fast5", "fast5_pass"]
 
         for dir in raw_seq_dirs:
             if os.path.exists(os.path.join(self.run_abspath, dir)):

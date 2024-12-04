@@ -49,7 +49,9 @@ nanopore_analysis:
             anglerfish:
                 anglerfish_samplesheets_dir: {tmp.name}/ngi-nas-ns/samplesheets/anglerfish
                 anglerfish_path: mock
-    minknow_reports_dir: {tmp.name}/minknow_reports/
+    minknow_reports_dir: {tmp.name}/ngi-internal/minknow_reports/
+    toulligqc_reports_dir: {tmp.name}/ngi-internal/toulligqc_reports/
+    toulligqc_executable: toulligqc
     rsync_options:
         '-Lav': None
         '-r': None
@@ -90,7 +92,6 @@ def create_ONT_run_dir(
     script_files: bool = False,
     run_finished: bool = False,
     sync_finished: bool = False,
-    raw_dirs: bool = False,
     fastq_dirs: bool = False,
     barcode_dirs: bool = False,
     anglerfish_samplesheets: bool = False,
@@ -132,8 +133,14 @@ def create_ONT_run_dir(
         write_pore_count_history(run_path, flowcell_id, instrument_position)
 
     if run_finished:
+        # Raw seq data
+        os.mkdir(f"{run_path}/pod5_pass")
+
         # Run summary .txt
         open(f"{run_path}/final_summary_{run_name}.txt", "w").close()
+
+        # Sequencing summary .txt
+        open(f"{run_path}/sequencing_summary_{run_name}.txt", "w").close()
 
         # Run report .html
         open(f"{run_path}/report_{run_name}.html", "w").close()
@@ -187,9 +194,6 @@ def create_ONT_run_dir(
     if anglerfish_exit is not None:
         with open(f"{run_path}/.anglerfish_done", "w") as f:
             f.write(str(anglerfish_exit))
-
-    if raw_dirs:
-        os.mkdir(f"{run_path}/pod5_pass")
 
     if fastq_dirs:
         os.mkdir(f"{run_path}/fastq_pass")
