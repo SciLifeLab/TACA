@@ -1,8 +1,13 @@
 """CLI for the delivery subcommand."""  # furure todo: rename to "deliver" when fully implemented and taca-ngi-pipieline is deprecated
 
+import logging
+
 import click
 
 from taca.delivery import deliver
+from taca.utils.config import load_yaml_config
+
+logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -11,7 +16,7 @@ def delivery():
     pass
 
 
-# Stage data
+### Stage data ###
 @delivery.command()
 @click.option(
     "-f",
@@ -33,22 +38,79 @@ def stage(project, flowcells, samples):
     deliver.stage(project, flowcells=flowcells_to_stage, samples=samples_to_stage)
 
 
-# Upload data
+### Upload data ###
 @delivery.command()
 @click.option(
-    "-s",
     "--stage_dir",
     type=str,
     required=True,
     help="Staged directory to upload",
 )
+@click.option(
+    "--order_portal",
+    default=None,
+    envvar="ORDER_PORTAL",
+    required=True,
+    type=click.File("r"),
+    help="Path to order portal credantials to retrive project information",
+)
+@click.option(
+    "--statusdb_config",
+    default=None,
+    envvar="STATUS_DB_CONFIG",
+    required=True,
+    type=click.File("r"),
+    help="Path to statusdb config file",
+)
+@click.option(
+    "--pi_email",
+    default=None,
+    type=str,
+    help="PI email, to override PI email stored in order portal",
+)
+@click.option(
+    "--add_user",
+    multiple=True,
+    type=click.STRING,
+    help="Add additional user to DDS project. Multiple users can be given by calling this option multiple times",
+)
+@click.option(
+    "--project_description",
+    default=None,
+    type=click.STRING,
+    help="Override project description in order portal, e.g. if project not in order portal",
+)
+@click.option(
+    "--ignore_orderportal_members",
+    is_flag=True,
+    default=False,
+    help="Do not fetch member information from the order portal",
+)
 @click.argument("project")
-def upload(project, stage_dir):
+def upload(
+    project,
+    stage_dir,
+    statusdb_config=None,
+    order_portal=None,
+    pi_email=None,
+    add_user=None,
+    project_description=None,
+    ignore_orderportal_members=False,
+):
     """Upload a staged project to DDS."""
-    deliver.upload_to_dds(project, stage_dir)
+    load_yaml_config(statusdb_config.name)
+    load_yaml_config(order_portal.name)
+    deliver.upload_to_dds(
+        project,
+        stage_dir,
+        pi_email=pi_email,
+        add_user=list(set(add_user)),
+        project_description=project_description,
+        ignore_orderportal_members=ignore_orderportal_members,
+    )
 
 
-# Release data
+### Release data ###
 @delivery.command()
 @click.option(
     "-d",

@@ -1,5 +1,7 @@
 # TACA Version Log
 
+## 20241204.2
+Add support for uploading ONT data to DDS
 
 ## 20241204.1
 Add support for staging ONT data on Miarka
