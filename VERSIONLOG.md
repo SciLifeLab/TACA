@@ -1,7 +1,11 @@
 # TACA Version Log
 
+## 20241206.1
+
+Add ONT instrument data to bioinfo_tab
 
 ## 20241204.1
+
 Add support for staging ONT data on Miarka
 
 ## 20241128.1
