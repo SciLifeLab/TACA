@@ -1,3 +1,4 @@
+import json
 import logging
 
 import click
@@ -16,14 +17,16 @@ def server_status():
 
 # server status subcommands
 @server_status.command()
-@click.option("--statusdb", is_flag=True, help="Update the statusdb")
-def nases(statusdb):
+@click.option("--no_update", is_flag=True, help="Do not update the statusdb")
+def nases(no_update):
     """Checks the available space on all the nases"""
     if not CONFIG.get("server_status", ""):
         logging.warning("Configuration missing required entries: server_status")
     disk_space = status.get_nases_disk_space()
-    if statusdb:
+    if not no_update:
         status.update_status_db(disk_space, server_type="nas")
+    else:
+        print(json.dumps(disk_space, indent=4))
 
 
 @server_status.command()

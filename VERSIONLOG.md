@@ -1,5 +1,9 @@
 # TACA Version Log
 
+## 20241210.4
+
+Change server_status nas to update statusdb by default
+
 ## 20241210.3
 
 Add support for releasing DDS projects
