@@ -1,5 +1,9 @@
 # TACA Version Log
 
+## 20241212.2
+
+Replace PR labels action
+
 ## 20241212.1
 
 Add ONT instrument data to bioinfo_tab
